@@ -1,6 +1,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useUser } from '../../contexts/UserContext';
 import {
     Pressable,
     StyleSheet,
@@ -11,10 +12,11 @@ import {
 
 export default function ConfiguracoesScreen() {
   const [modoEscuro, setModoEscuro] = useState(false);
-  const { nome } = useLocalSearchParams<{ nome: string }>();
+  const { userName, clearUser } = useUser();
   const router = useRouter();
 
   function sair() {
+    clearUser();
     router.replace('/');
   }
 
@@ -47,7 +49,7 @@ export default function ConfiguracoesScreen() {
         <Text style={styles.cardTitulo}>Sobre o aplicativo</Text>
         <Text style={styles.texto}>Versão: 1.0.0</Text>
         <Text style={styles.texto}>
-          Usuário: {nome || 'Não identificado'}
+          Usuário: {userName || 'Não identificado'}
         </Text>
         <Text style={styles.texto}>
           Monitoramento de sensores IoT

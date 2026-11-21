@@ -1,6 +1,7 @@
-
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useUser } from '../contexts/UserContext';
+import { Alert } from 'react-native';
 import {
   Image,
   KeyboardAvoidingView,
@@ -12,20 +13,49 @@ import {
   View,
 } from 'react-native';
 
+{/* Tela de login do aplicativo
+  remove espaços extras com trim(), verifica se o nome foi preenchido e navega para a home passando o nome como parâmetro*/}
+
 export default function LoginScreen() {
   const [nome, setNome] = useState('');
   const router = useRouter();
+  const { setUserName } = useUser();
 
-  function entrar() {
-    const nomeUsuario = nome.trim();
 
-    if (nomeUsuario.length > 0) {
-      router.push({
-        pathname: '/home',
-        params: { nome: nomeUsuario },
-      });
-    }
+function entrar() {
+  //Limpa espaços extras e reduz múltiplos espaços no meio para apenas um
+  const userName = nome.trim().replace(/\s+/g, ' ');
+
+  // Verifica tamanho mínimo
+  if (userName.length < 4) {
+    Alert.alert('Erro', 'O nome deve ter pelo menos 4 caracteres.');
+    return;
   }
+
+  // 3. Verifica tamanho máximo
+  if (userName.length > 50) {
+    Alert.alert('Erro', 'O nome não pode passar de 50 caracteres.');
+    return;
+  }
+
+  // 4. Permite apenas letras
+  const apenasLetrasRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/;
+  if (!apenasLetrasRegex.test(userName)) {
+    Alert.alert('Erro', 'O nome não pode conter números ou caracteres especiais.');
+    return;
+  }
+
+  // 5. Evita letras repetidas em sequência
+  const repeticaoRegex = /(.)\1{2,}/i;
+  if (repeticaoRegex.test(userName)) {
+    Alert.alert('Erro', 'Por favor, digite um nome válido.');
+    return;
+  }
+
+  // Se passar por tudo, salva e navega
+  setUserName(userName);
+  router.replace('/(tabs)/home');
+}
 
   return (
     <KeyboardAvoidingView

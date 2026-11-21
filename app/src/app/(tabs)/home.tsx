@@ -1,6 +1,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { useUser } from '../../contexts/UserContext';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 
 // IP do ESP32
-const ESP32_IP = '192.168.1.8';
+const ESP32_IP = '192.168.1.12';
 
 const API_URL = `http://${ESP32_IP}/api/sensor`;
 
@@ -23,8 +24,8 @@ type DadosSensor = {
 };
 
 export default function HomeScreen() {
-  const { nome } = useLocalSearchParams<{ nome: string }>();
   const router = useRouter();
+  const { userName, clearUser } = useUser();
 
   const [dados, setDados] = useState<DadosSensor | null>(null);
   const [conectado, setConectado] = useState(false);
@@ -62,6 +63,12 @@ export default function HomeScreen() {
     }
   }
 
+// Faz o logout e redireciona para a tela de login
+function handleLogout() {
+  clearUser();
+  router.replace('/');
+}
+
   useEffect(() => {
     buscarDados();
 
@@ -81,7 +88,7 @@ export default function HomeScreen() {
         <View>
           <Text style={styles.marca}>AmbiSense</Text>
           <Text style={styles.boasVindas}>
-            Olá, {nome || 'Usuário'}!
+            Olá, {userName || 'Usuário'}!
           </Text>
           <Text style={styles.subtitulo}>
             Monitoramento do ambiente
@@ -192,10 +199,25 @@ export default function HomeScreen() {
           Atualizar agora
         </Text>
       </Pressable>
+      
+      {/* Botão para ir para a tela de configurações */}
+      <Pressable
+        style={styles.botaoAtualizar}
+        onPress={() =>
+          router.push({
+            pathname: '/configuracoes',
+            params: { userName: userName },
+          })
+        }
+      >
+        <Text style={styles.textoBotao}>
+          Configurações
+        </Text>
+      </Pressable>
 
       <Pressable
         style={styles.botaoSair}
-        onPress={() => router.replace('/')}
+        onPress={handleLogout}
       >
         <Text style={styles.textoSair}>
           Sair da conta
