@@ -1,7 +1,9 @@
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useUser } from '../../contexts/UserContext';
+import Feather from '@expo/vector-icons/Feather';
+import { useTheme } from '../../contexts/ThemeContext';
+
 import {
   ActivityIndicator,
   Pressable,
@@ -12,7 +14,7 @@ import {
 } from 'react-native';
 
 // IP do ESP32
-const ESP32_IP = '192.168.1.12';
+const ESP32_IP = '192.168.1.9';
 
 const API_URL = `http://${ESP32_IP}/api/sensor`;
 
@@ -24,8 +26,8 @@ type DadosSensor = {
 };
 
 export default function HomeScreen() {
-  const router = useRouter();
-  const { userName, clearUser } = useUser();
+  const { userName } = useUser();
+  const { modoEscuro } = useTheme();
 
   const [dados, setDados] = useState<DadosSensor | null>(null);
   const [conectado, setConectado] = useState(false);
@@ -34,6 +36,7 @@ export default function HomeScreen() {
 
   const requisicaoEmAndamento = useRef(false);
 
+  
   async function buscarDados() {
     if (requisicaoEmAndamento.current) return;
 
@@ -63,12 +66,6 @@ export default function HomeScreen() {
     }
   }
 
-// Faz o logout e redireciona para a tela de login
-function handleLogout() {
-  clearUser();
-  router.replace('/');
-}
-
   useEffect(() => {
     buscarDados();
 
@@ -81,17 +78,22 @@ function handleLogout() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[
+        styles.container,
+        modoEscuro && { backgroundColor: '#0F172A' },
+      ]}
       contentContainerStyle={styles.conteudo}
     >
       <View style={styles.cabecalho}>
         <View>
-          <Text style={styles.marca}>AmbiSense</Text>
-          <Text style={styles.boasVindas}>
+          <Text style={[styles.boasVindas, modoEscuro && styles.textoClaro]}>
             Olá, {userName || 'Usuário'}!
           </Text>
-          <Text style={styles.subtitulo}>
-            Monitoramento do ambiente
+          <Text
+            style={[styles.subtitulo, modoEscuro && styles.textoSecundarioEscuro,
+            ]}
+          >
+            Acompanhe como está seu ambiente
           </Text>
         </View>
 
@@ -108,69 +110,130 @@ function handleLogout() {
             ]}
           />
           <Text style={styles.textoStatus}>
-            {conectado ? 'Online' : 'Offline'}
+            {conectado ? 'SENSOR ON' : 'SENSOR OFF'}
           </Text>
         </View>
       </View>
 
-      <Text style={styles.tituloSecao}>
+      <Text style={[styles.tituloSecao, modoEscuro && styles.textoClaro]}>
         Condições atuais
       </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.icone}>🌡️</Text>
-        <Text style={styles.label}>Temperatura</Text>
+      <View
+        style={[styles.card, modoEscuro && { backgroundColor: '#1E293B' },
+        ]}
+      >
+        <View
+          style={[styles.iconeContainer, modoEscuro && { backgroundColor: '#2a3544' },
+          ]}
+        >
+          <Feather name="thermometer" size={30} color="#2563EB" />
+        </View>
+        <Text
+          style={[styles.label, modoEscuro && styles.textoSecundarioEscuro,]}
+        >
+        Temperatura
+        </Text>
 
         {dados ? (
-          <Text style={styles.valor}>
+          <Text
+            style={[styles.valor, modoEscuro && { color: '#F8FAFC' },
+          ]}
+>
             {dados.temperatura}
-            <Text style={styles.unidade}> °C</Text>
+            <Text
+              style={[styles.unidade, modoEscuro && styles.textoSecundarioEscuro,]}
+            >
+              {'°C'}
+            </Text>
           </Text>
         ) : (
           <Text style={styles.semDados}>-- °C</Text>
         )}
 
-        <Text style={styles.descricao}>
+        <Text
+          style={[styles.descricao, modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Temperatura do ambiente
         </Text>
       </View>
+        
+      <View
+        style={[styles.card, modoEscuro && { backgroundColor: '#1E293B' },
+        ]}
+      >
+        <View
+          style={[styles.iconeContainer, modoEscuro && { backgroundColor: '#2a3544' },
+          ]}
+        >
+          <Feather name="droplet" size={30} color="#2563EB" />
+        </View>
+        <Text style={[styles.label, modoEscuro && styles.textoSecundarioEscuro,]}>
+          Umidade do ar
+        </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.icone}>💧</Text>
-        <Text style={styles.label}>Umidade do ar</Text>
+{dados ? (
+  <Text
+    style={[
+      styles.valor,
+      modoEscuro && styles.textoClaro,
+    ]}
+  >
+    {dados.umidade}
+    <Text
+      style={[
+        styles.unidade,
+        modoEscuro && styles.textoSecundarioEscuro,
+      ]}
+    >
+      %
+    </Text>
+  </Text>
+) : (
+  <Text style={styles.semDados}>--%</Text>
+)}
 
-        {dados ? (
-          <Text style={styles.valor}>
-            {dados.umidade}
-            <Text style={styles.unidade}>%</Text>
-          </Text>
-        ) : (
-          <Text style={styles.semDados}>--%</Text>
-        )}
-
-        <Text style={styles.descricao}>
+        <Text
+          style={[styles.descricao, modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Umidade relativa do ambiente
         </Text>
       </View>
 
-      <View style={styles.cardConexao}>
-        <Text style={styles.tituloConexao}>
+      <View
+        style={[
+          styles.cardConexao,
+          modoEscuro && { backgroundColor: '#1E293B' },
+        ]}
+      >
+       <Text style={[styles.tituloConexao, modoEscuro && styles.textoClaro]}>
           Dispositivo conectado
         </Text>
 
-        <Text style={styles.info}>
+        <Text
+          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Sensor: DHT11
         </Text>
 
-        <Text style={styles.info}>
+        <Text style={[styles.info, modoEscuro && styles.textoClaro]}>
           Comunicação: HTTP / REST
         </Text>
 
-        <Text style={styles.info}>
+        <Text
+          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Atualização: a cada 2 segundos
         </Text>
 
-        <Text style={styles.info}>
+        <Text
+          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Última leitura: {ultimaAtualizacao || '--'}
         </Text>
 
@@ -199,33 +262,13 @@ function handleLogout() {
           Atualizar agora
         </Text>
       </Pressable>
-      
-      {/* Botão para ir para a tela de configurações */}
-      <Pressable
-        style={styles.botaoAtualizar}
-        onPress={() =>
-          router.push({
-            pathname: '/configuracoes',
-            params: { userName: userName },
-          })
-        }
-      >
-        <Text style={styles.textoBotao}>
-          Configurações
-        </Text>
-      </Pressable>
 
-      <Pressable
-        style={styles.botaoSair}
-        onPress={handleLogout}
-      >
-        <Text style={styles.textoSair}>
-          Sair da conta
-        </Text>
-      </Pressable>
 
-      <Text style={styles.rodape}>
-        AmbiSense · Tecnologia conectando você ao ambiente.
+      <Text
+        style={[styles.rodape, modoEscuro && styles.textoSecundarioEscuro,
+        ]}
+      >
+        Meu Ambiente · PDM 2026.2 (Uniavan)
       </Text>
     </ScrollView>
   );
@@ -268,13 +311,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 10,
   },
   statusOnline: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#6ccf8f',
   },
   statusOffline: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#e29999',
   },
   ponto: {
     width: 8,
@@ -301,28 +344,34 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 16,
-    elevation: 3,
-  },
-  icone: {
-    fontSize: 30,
+    borderRadius: 18,
+    padding: 20,
     marginBottom: 12,
+    elevation: 2,
+    alignItems: 'center',
   },
+  iconeContainer: {
+  width: 44,
+  height: 44,
+  borderRadius: 12,
+  backgroundColor: '#EFF6FF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 12,
+},
   label: {
     fontSize: 15,
     color: '#64748B',
   },
   valor: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: 'bold',
     color: '#0F172A',
-    marginTop: 8,
+    marginTop: 5,
   },
   unidade: {
-    fontSize: 24,
-    fontWeight: '500',
+    fontSize: 21,
+    fontWeight: '600',
     color: '#64748B',
   },
   semDados: {
@@ -334,7 +383,7 @@ const styles = StyleSheet.create({
   descricao: {
     fontSize: 13,
     color: '#94A3B8',
-    marginTop: 8,
+    marginTop: 5,
   },
   cardConexao: {
     backgroundColor: '#FFFFFF',
@@ -371,19 +420,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
-  botaoSair: {
-    alignItems: 'center',
-    padding: 16,
-    marginTop: 8,
-  },
-  textoSair: {
-    color: '#64748B',
-    fontSize: 14,
-  },
   rodape: {
     textAlign: 'center',
     color: '#94A3B8',
     fontSize: 11,
     marginTop: 12,
   },
+  textoClaro: {
+  color: '#F8FAFC',
+},
+textoSecundarioEscuro: {
+  color: '#CBD5E1',
+},
 });

@@ -1,17 +1,26 @@
 
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function TabsLayout() {
+  const { modoEscuro } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+
         tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarInactiveTintColor: modoEscuro ? '#94A3B8' : '#94A3B8',
+
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E8F0',
+          backgroundColor: modoEscuro ? '#1E293B' : '#FFFFFF',
+          borderTopColor: modoEscuro ? '#334155' : '#E2E8F0',
+        },
+
+        sceneStyle: {
+          backgroundColor: modoEscuro ? '#0F172A' : '#F1F5F9',
         },
       }}
     >
