@@ -1,7 +1,8 @@
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useRouter } from 'expo-router';
 import {
     Pressable,
     StyleSheet,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 
 export default function ConfiguracoesScreen() {
-  const [modoEscuro, setModoEscuro] = useState(false);
+  const { modoEscuro, setModoEscuro } = useTheme();
   const { userName, clearUser } = useUser();
   const router = useRouter();
 
@@ -42,16 +43,26 @@ export default function ConfiguracoesScreen() {
           modoEscuro && styles.textoClaro,
         ]}
       >
-        Aplicativo IoT Fácil
+        Meu Ambiente
       </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitulo}>Sobre o aplicativo</Text>
-        <Text style={styles.texto}>Versão: 1.0.0</Text>
-        <Text style={styles.texto}>
+        <View
+          style={[styles.card, modoEscuro && { backgroundColor: '#1E293B' },
+          ]}
+        >
+        <Text style={[styles.cardTitulo, modoEscuro && styles.textoClaro]}>
+          Sobre o aplicativo
+        </Text>
+
+        <Text style={[styles.texto, modoEscuro && styles.textoSecundarioEscuro]}>
+          Versão: 1.0.0
+        </Text>
+
+        <Text style={[styles.texto, modoEscuro && styles.textoSecundarioEscuro]}>
           Usuário: {userName || 'Não identificado'}
         </Text>
-        <Text style={styles.texto}>
+
+        <Text style={[styles.texto, modoEscuro && styles.textoSecundarioEscuro]}>
           Monitoramento de sensores IoT
         </Text>
       </View>
@@ -72,7 +83,7 @@ export default function ConfiguracoesScreen() {
               modoEscuro && styles.textoClaro,
             ]}
           >
-            Alterar aparência da tela
+            Alterar aparência do aplicativo
           </Text>
         </View>
 
@@ -88,7 +99,7 @@ export default function ConfiguracoesScreen() {
         style={styles.botao}
         onPress={sair}
       >
-        <Text style={styles.textoBotao}>Sair</Text>
+        <Text style={styles.textoBotao}>Sair da conta</Text>
       </Pressable>
     </View>
   );
@@ -162,4 +173,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  textoSecundarioEscuro: {
+  color: '#CBD5E1',
+},
 });

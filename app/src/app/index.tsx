@@ -69,7 +69,7 @@ function entrar() {
           resizeMode="contain"
         />
 
-        <Text style={styles.titulo}>Meu ambiente</Text>
+        <Text style={styles.titulo}>Meu Ambiente</Text>
 
         <Text style={styles.subtitulo}>
           Monitoramento inteligente e de Temperatura e Umidade
