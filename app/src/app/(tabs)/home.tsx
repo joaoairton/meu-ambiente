@@ -110,7 +110,7 @@ export default function HomeScreen() {
             ]}
           />
           <Text style={styles.textoStatus}>
-            {conectado ? 'SENSOR ON' : 'SENSOR OFF'}
+            {conectado ? 'ESP32 ON' : 'ESP32 OFF'}
           </Text>
         </View>
       </View>
@@ -202,74 +202,22 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <View
-        style={[
-          styles.cardConexao,
-          modoEscuro && { backgroundColor: '#1E293B' },
-        ]}
-      >
-       <Text style={[styles.tituloConexao, modoEscuro && styles.textoClaro]}>
-          Dispositivo conectado
-        </Text>
+      {!conectado && (
+  <Text style={styles.aviso}>
+    {carregando
+      ? 'Conectando ao ESP32...'
+      : 'Não foi possível acessar o ESP32. Verifique a conexão Wi-Fi.'}
+  </Text>
+)}
 
-        <Text
-          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
-          ]}
-        >
-          Sensor: DHT11
-        </Text>
+{carregando && (
+  <ActivityIndicator
+    size="small"
+    color="#2563EB"
+    style={{ marginTop: 12 }}
+  />
+)}
 
-        <Text style={[styles.info, modoEscuro && styles.textoClaro]}>
-          Comunicação: HTTP / REST
-        </Text>
-
-        <Text
-          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
-          ]}
-        >
-          Atualização: a cada 2 segundos
-        </Text>
-
-        <Text
-          style={[styles.info, modoEscuro && styles.textoSecundarioEscuro,
-          ]}
-        >
-          Última leitura: {ultimaAtualizacao || '--'}
-        </Text>
-
-        {!conectado && (
-          <Text style={styles.aviso}>
-            {carregando
-              ? 'Conectando ao ESP32...'
-              : 'Não foi possível acessar o ESP32. Verifique a conexão Wi-Fi.'}
-          </Text>
-        )}
-
-        {carregando && (
-          <ActivityIndicator
-            size="small"
-            color="#2563EB"
-            style={{ marginTop: 12 }}
-          />
-        )}
-      </View>
-
-      <Pressable
-        style={styles.botaoAtualizar}
-        onPress={buscarDados}
-      >
-        <Text style={styles.textoBotao}>
-          Atualizar agora
-        </Text>
-      </Pressable>
-
-
-      <Text
-        style={[styles.rodape, modoEscuro && styles.textoSecundarioEscuro,
-        ]}
-      >
-        Meu Ambiente · PDM 2026.2 (Uniavan)
-      </Text>
     </ScrollView>
   );
 }
@@ -403,9 +351,10 @@ const styles = StyleSheet.create({
     marginBottom: 9,
   },
   aviso: {
-    color: '#DC2626',
-    fontSize: 13,
-    marginTop: 12,
+    marginTop: 18,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
   },
   botaoAtualizar: {
     backgroundColor: '#2563EB',

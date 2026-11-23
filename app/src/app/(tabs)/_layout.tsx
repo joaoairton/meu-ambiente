@@ -12,7 +12,7 @@ export default function TabsLayout() {
         headerShown: false,
 
         tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: modoEscuro ? '#94A3B8' : '#94A3B8',
+        tabBarInactiveTintColor: '#94A3B8',
 
         tabBarStyle: {
           backgroundColor: modoEscuro ? '#1E293B' : '#FFFFFF',
