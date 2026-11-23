@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import Feather from '@expo/vector-icons/Feather';
 import { useTheme } from '../../contexts/ThemeContext';
+import MediaCard from '../../components/MediaCard';
 
 import {
   ActivityIndicator,
@@ -25,6 +26,12 @@ type DadosSensor = {
   status: string;
 };
 
+// Estrutura utilizada para armazenar as leituras do sensor
+type Leitura = {
+  temperatura: number;
+  umidade: number;
+};
+
 export default function HomeScreen() {
   const { userName } = useUser();
   const { modoEscuro } = useTheme();
@@ -35,6 +42,9 @@ export default function HomeScreen() {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState('');
 
   const requisicaoEmAndamento = useRef(false);
+
+  // Armazena as últimas 10 leituras válidas do ESP32
+  const [historico, setHistorico] = useState<Leitura[]>([]);
 
   
   async function buscarDados() {
@@ -54,6 +64,18 @@ export default function HomeScreen() {
       const resultado: DadosSensor = await resposta.json();
 
       setDados(resultado);
+      if (
+        Number.isFinite(resultado.temperatura) &&
+        Number.isFinite(resultado.umidade)
+      ) {
+        setHistorico((anterior) => [
+          ...anterior.slice(-9),
+          {
+            temperatura: resultado.temperatura,
+            umidade: resultado.umidade,
+          },
+        ]);
+      }
       setConectado(true);
       setUltimaAtualizacao(
         new Date().toLocaleTimeString('pt-BR')
@@ -75,6 +97,17 @@ export default function HomeScreen() {
 
     return () => clearInterval(intervalo);
   }, []);
+
+  // Médias das últimas 10 leituras
+  const mediaTemperatura = historico.length
+    ? historico.reduce((soma, leitura) => soma + leitura.temperatura, 0) /
+      historico.length
+    : null;
+
+  const mediaUmidade = historico.length
+    ? historico.reduce((soma, leitura) => soma + leitura.umidade, 0) /
+      historico.length
+    : null;
 
   return (
     <ScrollView
@@ -201,6 +234,26 @@ export default function HomeScreen() {
           Umidade relativa do ambiente
         </Text>
       </View>
+
+<Text style={[styles.tituloSecao, { textAlign: 'center' }, modoEscuro && styles.textoClaro]}>
+  Média das últimas 10 leituras
+</Text>
+
+<View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+  <MediaCard
+    titulo="Temperatura média"
+    valor={mediaTemperatura}
+    unidade="°C"
+    icone="thermometer"
+  />
+
+  <MediaCard
+    titulo="Umidade média"
+    valor={mediaUmidade}
+    unidade="%"
+    icone="droplet"
+  />
+</View>
 
       {!conectado && (
   <Text style={styles.aviso}>
