@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "aula27-10-2026",
-    "slug": "aula27-10-2026",
+    "name": "Meu Ambiente",
+    "slug": "Meu Ambiente",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "aula27102026",
+    "scheme": "meuambiente",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"

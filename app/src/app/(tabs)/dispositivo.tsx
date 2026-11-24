@@ -1,10 +1,17 @@
 
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useEffect, useState } from 'react';
+import { Image, Text, View } from 'react-native';
 
-const API_URL = 'http://192.168.1.9/api/status';
+import { useTheme } from '../../contexts/ThemeContext';
+import { styles } from '../../styles/dispositivoStyles';
 
+// CONFIGURAÇÃO DA COMUNICAÇÃO COM O ESP32
+
+// Endpoint HTTP responsável pelas informações do dispositivo
+const ESP32_IP = '192.168.1.13';
+const API_URL = `http://${ESP32_IP}/api/status`;
+
+// Estrutura dos dados retornados pelo endpoint /api/status
 type StatusDispositivo = {
   status: string;
   dispositivo: string;
@@ -14,35 +21,52 @@ type StatusDispositivo = {
 };
 
 export default function DeviceScreen() {
+  // CONTEXTO E ESTADOS
+
+  // Identifica o tema selecionado nas configurações
   const { modoEscuro } = useTheme();
+
+  // Define a cor dos textos de acordo com o tema
   const estiloInfo = modoEscuro ? styles.textoClaro : undefined;
 
-const [dados, setDados] = useState<StatusDispositivo | null>(null);
+  // Armazena as informações recebidas do ESP32
+  const [dados, setDados] = useState<StatusDispositivo | null>(null);
 
-// consulta o ESP32 a cada 5 segundos e armazena os dados recebidos no estado dados
-useEffect(() => {
-  async function buscarStatus() {
-    try {
-      const resposta = await fetch(API_URL);
+  // CONSULTA HTTP
 
-      if (!resposta.ok) {
-        throw new Error('Erro na comunicação com o ESP32');
+  // Consulta o status do ESP32 a cada 5 segundos
+  useEffect(() => {
+    async function buscarStatus() {
+      try {
+        const resposta = await fetch(API_URL);
+
+        // Verifica se a requisição HTTP foi concluída com sucesso
+        if (!resposta.ok) {
+          throw new Error('Erro na comunicação com o ESP32');
+        }
+
+        // Converte a resposta JSON e atualiza as informações
+        const resultado: StatusDispositivo = await resposta.json();
+
+        setDados(resultado);
+      } catch (erro) {
+        // Registra o erro e remove os dados da tela
+        console.log('Erro ao consultar dispositivo:', erro);
+        setDados(null);
       }
-
-      const resultado: StatusDispositivo = await resposta.json();
-      setDados(resultado);
-    } catch (erro) {
-      console.log('Erro ao consultar dispositivo:', erro);
-      setDados(null);
     }
-  }
 
-  buscarStatus();
+    // Executa a primeira consulta ao abrir a tela
+    buscarStatus();
 
-  const intervalo = setInterval(buscarStatus, 5000);
+    // Repete a consulta automaticamente a cada 5 segundos
+    const intervalo = setInterval(buscarStatus, 5000);
 
-  return () => clearInterval(intervalo);
-}, []);
+    // Encerra o intervalo quando o componente é desmontado
+    return () => clearInterval(intervalo);
+  }, []);
+
+  // INTERFACE DO DISPOSITIVO
 
   return (
     <View
@@ -51,6 +75,7 @@ useEffect(() => {
         modoEscuro && styles.containerEscuro,
       ]}
     >
+      {/* Título da tela */}
       <Text
         style={[
           styles.title,
@@ -60,6 +85,7 @@ useEffect(() => {
         Dispositivo
       </Text>
 
+      {/* Imagem ilustrativa do ESP32 */}
       <Image
         source={require('../../../assets/images/esp32.png')}
         style={{ width: 180, height: 180 }}
@@ -74,84 +100,43 @@ useEffect(() => {
       >
         Status
       </Text>
+
+      {/* Informações recebidas do endpoint /api/status */}
       {dados ? (
-        <View style={[styles.card, modoEscuro && styles.cardEscuro]}>
+        <View
+          style={[
+            styles.card,
+            modoEscuro && styles.cardEscuro,
+          ]}
+        >
           <Text style={estiloInfo}>
             Modelo: {dados.dispositivo}
           </Text>
+
           <Text style={estiloInfo}>
             Status: {dados.status}
           </Text>
+
           <Text style={estiloInfo}>
             Wi-Fi: {dados.wifi}
           </Text>
+
           <Text style={estiloInfo}>
             IP: {dados.ip}
           </Text>
+
           <Text style={estiloInfo}>
             Sinal Wi-Fi: {dados.sinal_wifi} dBm
           </Text>
         </View>
       ) : (
-  <Text style={[styles.aviso, estiloInfo]}>
-    Não foi possível conectar ao ESP32.
-    {'\n'}
-    Verifique a conexão Wi-Fi.
-  </Text>
-)}
-
+        // Mensagem exibida quando não há comunicação com o ESP32
+        <Text style={[styles.aviso, estiloInfo]}>
+          Não foi possível conectar ao ESP32.
+          {'\n'}
+          Verifique a conexão Wi-Fi.
+        </Text>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    padding: 24,
-  },
-
-  containerEscuro: {
-    backgroundColor: '#0F172A',
-  },
-
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#0F172A',
-  },
-
-  description: {
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 12,
-    textAlign: 'center',
-  },
-
-  textoClaro: {
-    color: '#F8FAFC',
-  },
-
-  textoSecundarioEscuro: {
-    color: '#CBD5E1',
-  },
-  card: {
-  width: '100%',
-  backgroundColor: '#FFFFFF',
-  borderRadius: 16,
-  padding: 20,
-  marginTop: 20,
-  gap: 8,
-},
-cardEscuro: {
-  backgroundColor: '#1E293B',
-},
-aviso: {
-  fontSize: 15,
-  lineHeight: 22,
-  textAlign: 'center',
-  marginTop: 16,
-},
-});

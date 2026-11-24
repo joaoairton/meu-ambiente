@@ -1,24 +1,29 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { useUser } from '../../contexts/UserContext';
-import Feather from '@expo/vector-icons/Feather';
-import { useTheme } from '../../contexts/ThemeContext';
-import MediaCard from '../../components/MediaCard';
-
+import { styles } from '../../styles/homeStyles';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-// IP do ESP32
-const ESP32_IP = '192.168.1.9';
+import Feather from '@expo/vector-icons/Feather';
 
+import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import MediaCard from '../../components/MediaCard';
+
+// CONFIGURAÇÃO DA COMUNICAÇÃO COM O ESP32
+
+// Endereço IP local do dispositivo
+const ESP32_IP = '192.168.1.13';
+
+// Endpoint HTTP responsável pelas leituras do DHT11
 const API_URL = `http://${ESP32_IP}/api/sensor`;
 
+// Estrutura dos dados recebidos da API do ESP32
 type DadosSensor = {
   temperatura: number;
   umidade: number;
@@ -26,27 +31,42 @@ type DadosSensor = {
   status: string;
 };
 
-// Estrutura utilizada para armazenar as leituras do sensor
+// Estrutura utilizada para armazenar o histórico das leituras
 type Leitura = {
   temperatura: number;
   umidade: number;
 };
 
 export default function HomeScreen() {
+  // CONTEXTOS
+
+  // Recupera o nome informado pelo usuário no login
   const { userName } = useUser();
+
+  // Identifica o tema selecionado nas configurações
   const { modoEscuro } = useTheme();
 
+  // ESTADOS
+
+  // Armazena a leitura mais recente recebida do ESP32
   const [dados, setDados] = useState<DadosSensor | null>(null);
+
+  // Controla o estado da comunicação e o carregamento inicial
   const [conectado, setConectado] = useState(false);
   const [carregando, setCarregando] = useState(true);
+
+  // Registra o horário da última atualização bem-sucedida
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState('');
 
+  // Impede requisições HTTP simultâneas
   const requisicaoEmAndamento = useRef(false);
 
-  // Armazena as últimas 10 leituras válidas do ESP32
+  // Armazena as últimas 10 leituras válidas do sensor
   const [historico, setHistorico] = useState<Leitura[]>([]);
 
-  
+  // COMUNICAÇÃO HTTP
+
+  // Consulta o endpoint do ESP32 e atualiza os dados da tela
   async function buscarDados() {
     if (requisicaoEmAndamento.current) return;
 
@@ -57,13 +77,17 @@ export default function HomeScreen() {
         method: 'GET',
       });
 
+      // Verifica se a requisição HTTP foi concluída com sucesso
       if (!resposta.ok) {
         throw new Error('Falha na comunicação com o ESP32');
       }
 
+      // Converte a resposta JSON para a estrutura definida
       const resultado: DadosSensor = await resposta.json();
 
       setDados(resultado);
+
+      // Valida as medições e mantém somente as 10 mais recentes
       if (
         Number.isFinite(resultado.temperatura) &&
         Number.isFinite(resultado.umidade)
@@ -76,18 +100,25 @@ export default function HomeScreen() {
           },
         ]);
       }
+
       setConectado(true);
+
       setUltimaAtualizacao(
         new Date().toLocaleTimeString('pt-BR')
       );
     } catch (erro) {
+      // Sinaliza a perda de comunicação com o dispositivo
       setConectado(false);
     } finally {
+      // Libera o controle da requisição, mesmo em caso de erro
       setCarregando(false);
       requisicaoEmAndamento.current = false;
     }
   }
 
+  // ATUALIZAÇÃO AUTOMÁTICA
+
+  // Realiza a primeira consulta e repete a leitura a cada 2 segundos
   useEffect(() => {
     buscarDados();
 
@@ -95,19 +126,29 @@ export default function HomeScreen() {
       buscarDados();
     }, 2000);
 
+    // Encerra o intervalo quando o componente é desmontado
     return () => clearInterval(intervalo);
   }, []);
 
-  // Médias das últimas 10 leituras
+  // CÁLCULO DAS MÉDIAS
+
+  // Calcula a média das temperaturas armazenadas no histórico
   const mediaTemperatura = historico.length
-    ? historico.reduce((soma, leitura) => soma + leitura.temperatura, 0) /
-      historico.length
+    ? historico.reduce(
+        (soma, leitura) => soma + leitura.temperatura,
+        0
+      ) / historico.length
     : null;
 
+  // Calcula a média das umidades armazenadas no histórico
   const mediaUmidade = historico.length
-    ? historico.reduce((soma, leitura) => soma + leitura.umidade, 0) /
-      historico.length
+    ? historico.reduce(
+        (soma, leitura) => soma + leitura.umidade,
+        0
+      ) / historico.length
     : null;
+
+  // INTERFACE DA HOME
 
   return (
     <ScrollView
@@ -117,19 +158,29 @@ export default function HomeScreen() {
       ]}
       contentContainerStyle={styles.conteudo}
     >
+      {/* CABEÇALHO: usuário e status de conexão */}
       <View style={styles.cabecalho}>
         <View>
-          <Text style={[styles.boasVindas, modoEscuro && styles.textoClaro]}>
+          <Text
+            style={[
+              styles.boasVindas,
+              modoEscuro && styles.textoClaro,
+            ]}
+          >
             Olá, {userName || 'Usuário'}!
           </Text>
+
           <Text
-            style={[styles.subtitulo, modoEscuro && styles.textoSecundarioEscuro,
+            style={[
+              styles.subtitulo,
+              modoEscuro && styles.textoSecundarioEscuro,
             ]}
           >
             Acompanhe como está seu ambiente
           </Text>
         </View>
 
+        {/* Indicador visual da comunicação com o ESP32 */}
         <View
           style={[
             styles.status,
@@ -142,40 +193,65 @@ export default function HomeScreen() {
               conectado ? styles.pontoOnline : styles.pontoOffline,
             ]}
           />
+
           <Text style={styles.textoStatus}>
             {conectado ? 'ESP32 ON' : 'ESP32 OFF'}
           </Text>
         </View>
       </View>
 
-      <Text style={[styles.tituloSecao, modoEscuro && styles.textoClaro]}>
+      {/* CONDIÇÕES ATUAIS */}
+      <Text
+        style={[
+          styles.tituloSecao,
+          modoEscuro && styles.textoClaro,
+        ]}
+      >
         Condições atuais
       </Text>
 
+      {/* Card da temperatura atual */}
       <View
-        style={[styles.card, modoEscuro && { backgroundColor: '#1E293B' },
+        style={[
+          styles.card,
+          modoEscuro && { backgroundColor: '#1E293B' },
         ]}
       >
         <View
-          style={[styles.iconeContainer, modoEscuro && { backgroundColor: '#2a3544' },
+          style={[
+            styles.iconeContainer,
+            modoEscuro && { backgroundColor: '#2a3544' },
           ]}
         >
-          <Feather name="thermometer" size={30} color="#2563EB" />
+          <Feather
+            name="thermometer"
+            size={30}
+            color="#2563EB"
+          />
         </View>
+
         <Text
-          style={[styles.label, modoEscuro && styles.textoSecundarioEscuro,]}
+          style={[
+            styles.label,
+            modoEscuro && styles.textoSecundarioEscuro,
+          ]}
         >
-        Temperatura
+          Temperatura
         </Text>
 
         {dados ? (
           <Text
-            style={[styles.valor, modoEscuro && { color: '#F8FAFC' },
-          ]}
->
+            style={[
+              styles.valor,
+              modoEscuro && { color: '#F8FAFC' },
+            ]}
+          >
             {dados.temperatura}
             <Text
-              style={[styles.unidade, modoEscuro && styles.textoSecundarioEscuro,]}
+              style={[
+                styles.unidade,
+                modoEscuro && styles.textoSecundarioEscuro,
+              ]}
             >
               {'°C'}
             </Text>
@@ -185,253 +261,126 @@ export default function HomeScreen() {
         )}
 
         <Text
-          style={[styles.descricao, modoEscuro && styles.textoSecundarioEscuro,
+          style={[
+            styles.descricao,
+            modoEscuro && styles.textoSecundarioEscuro,
           ]}
         >
           Temperatura do ambiente
         </Text>
       </View>
-        
+
+      {/* Card da umidade atual */}
       <View
-        style={[styles.card, modoEscuro && { backgroundColor: '#1E293B' },
+        style={[
+          styles.card,
+          modoEscuro && { backgroundColor: '#1E293B' },
         ]}
       >
         <View
-          style={[styles.iconeContainer, modoEscuro && { backgroundColor: '#2a3544' },
+          style={[
+            styles.iconeContainer,
+            modoEscuro && { backgroundColor: '#2a3544' },
           ]}
         >
-          <Feather name="droplet" size={30} color="#2563EB" />
+          <Feather
+            name="droplet"
+            size={30}
+            color="#2563EB"
+          />
         </View>
-        <Text style={[styles.label, modoEscuro && styles.textoSecundarioEscuro,]}>
+
+        <Text
+          style={[
+            styles.label,
+            modoEscuro && styles.textoSecundarioEscuro,
+          ]}
+        >
           Umidade do ar
         </Text>
 
-{dados ? (
-  <Text
-    style={[
-      styles.valor,
-      modoEscuro && styles.textoClaro,
-    ]}
-  >
-    {dados.umidade}
-    <Text
-      style={[
-        styles.unidade,
-        modoEscuro && styles.textoSecundarioEscuro,
-      ]}
-    >
-      %
-    </Text>
-  </Text>
-) : (
-  <Text style={styles.semDados}>--%</Text>
-)}
+        {dados ? (
+          <Text
+            style={[
+              styles.valor,
+              modoEscuro && styles.textoClaro,
+            ]}
+          >
+            {dados.umidade}
+            <Text
+              style={[
+                styles.unidade,
+                modoEscuro && styles.textoSecundarioEscuro,
+              ]}
+            >
+              %
+            </Text>
+          </Text>
+        ) : (
+          <Text style={styles.semDados}>--%</Text>
+        )}
 
         <Text
-          style={[styles.descricao, modoEscuro && styles.textoSecundarioEscuro,
+          style={[
+            styles.descricao,
+            modoEscuro && styles.textoSecundarioEscuro,
           ]}
         >
           Umidade relativa do ambiente
         </Text>
       </View>
 
-<Text style={[styles.tituloSecao, { textAlign: 'center' }, modoEscuro && styles.textoClaro]}>
-  Média das últimas 10 leituras
-</Text>
+      {/* MÉDIAS DAS ÚLTIMAS 10 LEITURAS */}
+      <Text
+        style={[
+          styles.tituloSecao,
+          { textAlign: 'center' },
+          modoEscuro && styles.textoClaro,
+        ]}
+      >
+        Média das últimas 10 leituras
+      </Text>
 
-<View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-  <MediaCard
-    titulo="Temperatura média"
-    valor={mediaTemperatura}
-    unidade="°C"
-    icone="thermometer"
-  />
+      {/* Reutilização do componente MediaCard */}
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
+        <MediaCard
+          titulo="Temperatura média"
+          valor={mediaTemperatura}
+          unidade="°C"
+          icone="thermometer"
+        />
 
-  <MediaCard
-    titulo="Umidade média"
-    valor={mediaUmidade}
-    unidade="%"
-    icone="droplet"
-  />
-</View>
+        <MediaCard
+          titulo="Umidade média"
+          valor={mediaUmidade}
+          unidade="%"
+          icone="droplet"
+        />
+      </View>
 
+      {/* AVISOS DE COMUNICAÇÃO */}
       {!conectado && (
-  <Text style={styles.aviso}>
-    {carregando
-      ? 'Conectando ao ESP32...'
-      : 'Não foi possível acessar o ESP32. Verifique a conexão Wi-Fi.'}
-  </Text>
-)}
+        <Text style={styles.aviso}>
+          {carregando
+            ? 'Conectando ao ESP32...'
+            : 'Não foi possível acessar o ESP32. Verifique a conexão Wi-Fi.'}
+        </Text>
+      )}
 
-{carregando && (
-  <ActivityIndicator
-    size="small"
-    color="#2563EB"
-    style={{ marginTop: 12 }}
-  />
-)}
-
+      {/* Indicador exibido durante o carregamento inicial */}
+      {carregando && (
+        <ActivityIndicator
+          size="small"
+          color="#2563EB"
+          style={{ marginTop: 12 }}
+        />
+      )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-  },
-  conteudo: {
-    padding: 24,
-    paddingTop: 55,
-    paddingBottom: 40,
-  },
-  cabecalho: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  marca: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2563EB',
-  },
-  boasVindas: {
-    fontSize: 27,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginTop: 8,
-  },
-  subtitulo: {
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 5,
-  },
-  status: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  statusOnline: {
-    backgroundColor: '#6ccf8f',
-  },
-  statusOffline: {
-    backgroundColor: '#e29999',
-  },
-  ponto: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  pontoOnline: {
-    backgroundColor: '#16A34A',
-  },
-  pontoOffline: {
-    backgroundColor: '#DC2626',
-  },
-  textoStatus: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#334155',
-  },
-  tituloSecao: {
-    fontSize: 19,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 12,
-    elevation: 2,
-    alignItems: 'center',
-  },
-  iconeContainer: {
-  width: 44,
-  height: 44,
-  borderRadius: 12,
-  backgroundColor: '#EFF6FF',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginBottom: 12,
-},
-  label: {
-    fontSize: 15,
-    color: '#64748B',
-  },
-  valor: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginTop: 5,
-  },
-  unidade: {
-    fontSize: 21,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  semDados: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#94A3B8',
-    marginTop: 8,
-  },
-  descricao: {
-    fontSize: 13,
-    color: '#94A3B8',
-    marginTop: 5,
-  },
-  cardConexao: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 22,
-    marginTop: 4,
-  },
-  tituloConexao: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    marginBottom: 14,
-  },
-  info: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 9,
-  },
-  aviso: {
-    marginTop: 18,
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  botaoAtualizar: {
-    backgroundColor: '#2563EB',
-    height: 52,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 22,
-  },
-  textoBotao: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  rodape: {
-    textAlign: 'center',
-    color: '#94A3B8',
-    fontSize: 11,
-    marginTop: 12,
-  },
-  textoClaro: {
-  color: '#F8FAFC',
-},
-textoSecundarioEscuro: {
-  color: '#CBD5E1',
-},
-});
