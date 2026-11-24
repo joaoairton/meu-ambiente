@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# Meu Ambiente
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile desenvolvido para monitoramento de temperatura e umidade do ambiente, utilizando React Native e ESP32.
 
-## Get started
 
-1. Install dependencies
+## Funcionalidades
 
-   ```bash
-   npm install
-   ```
+- Tela de identificação do usuário.
+- Monitoramento de temperatura e umidade.
+- Atualização automática dos dados a cada 2 segundos.
+- Cálculo da média das últimas 10 leituras.
+- Monitoramento do status de conexão com o ESP32.
+- Visualização das informações do dispositivo.
+- Modo claro e escuro.
 
-2. Start the app
 
-   ```bash
-   npx expo start
-   ```
+## Arquitetura
 
-In the output, you'll find options to open the app in a
+![alt text](image.png)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Endpoints da API
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | /api/sensor | Retorna temperatura, umidade e status do sensor. |
+| GET | /api/status | Retorna informações do ESP32 e da conexão Wi-Fi. |
 
-## Get a fresh project
+## Estrutura do projeto
 
-When you're ready, run:
+- `src/app/`: telas e configuração da navegação.
+- `src/components/`: componentes reutilizáveis.
+- `src/contexts/`: gerenciamento de estados compartilhados.
+- `src/styles/`: estilos das telas e componentes.
+- `assets/`: imagens e recursos visuais.
+
+## Instalação e execução
+
+### Pré-requisitos
+
+- Node.js
+- npm
+- Expo
+- ESP32 com o firmware configurado.
+- Aplicativo e ESP32 conectados à mesma rede Wi-Fi.
+
+### Instalar as dependências
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+### Executar o aplicativo
 
-### Other setup steps
+```bash
+npx expo start
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Configuração da comunicação
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Configure o endereço IP do ESP32 nos arquivos `home.tsx` e `dispositivo.tsx`, conforme o endereço atribuído ao dispositivo na rede local.

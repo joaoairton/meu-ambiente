@@ -1,31 +1,89 @@
 
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
+
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
+import { useUser } from '../contexts/UserContext';
+import { styles } from '../styles/loginStyles';
+
+// TELA DE LOGIN
+// Responsável por validar o nome, armazenar o usuário
+// e permitir o acesso à tela principal do aplicativo.
+
 export default function LoginScreen() {
+  // ESTADOS E NAVEGAÇÃO
+
+  // Armazena o nome digitado no campo de entrada
   const [nome, setNome] = useState('');
+
+  // Controla a navegação entre as telas
   const router = useRouter();
 
-  function entrar() {
-    const nomeUsuario = nome.trim();
+  // Disponibiliza o nome do usuário para as demais telas
+  const { setUserName } = useUser();
 
-    if (nomeUsuario.length > 0) {
-      router.push({
-        pathname: '/home',
-        params: { nome: nomeUsuario },
-      });
+  // VALIDAÇÃO DO NOME
+
+  function entrar() {
+    // Remove espaços nas extremidades e espaços duplicados
+    const userName = nome.trim().replace(/\s+/g, ' ');
+
+    // Verifica o tamanho mínimo permitido
+    if (userName.length < 4) {
+      Alert.alert(
+        'Erro',
+        'O nome deve ter pelo menos 4 caracteres.'
+      );
+      return;
     }
+
+    // Verifica o tamanho máximo permitido
+    if (userName.length > 50) {
+      Alert.alert(
+        'Erro',
+        'O nome não pode passar de 50 caracteres.'
+      );
+      return;
+    }
+
+    // Permite apenas letras, espaços, apóstrofos e hífens
+    const apenasLetrasRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/;
+
+    if (!apenasLetrasRegex.test(userName)) {
+      Alert.alert(
+        'Erro',
+        'O nome não pode conter números ou caracteres especiais.'
+      );
+      return;
+    }
+
+    // Impede três ou mais caracteres iguais consecutivos
+    const repeticaoRegex = /(.)\1{2,}/i;
+
+    if (repeticaoRegex.test(userName)) {
+      Alert.alert(
+        'Erro',
+        'Por favor, digite um nome válido.'
+      );
+      return;
+    }
+
+    // Salva o nome validado e navega para a Home
+    setUserName(userName);
+    router.replace('/(tabs)/home');
   }
+
+  // INTERFACE DO LOGIN
 
   return (
     <KeyboardAvoidingView
@@ -33,19 +91,26 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.card}>
+        {/* Imagem ilustrativa do microcontrolador */}
         <Image
           source={require('../../assets/images/microcontroller.png')}
           style={styles.imagem}
           resizeMode="contain"
         />
 
-        <Text style={styles.titulo}>Meu ambiente</Text>
+        {/* Identificação do aplicativo */}
+        <Text style={styles.titulo}>
+          Meu Ambiente
+        </Text>
 
         <Text style={styles.subtitulo}>
           Monitoramento inteligente e de Temperatura e Umidade
         </Text>
 
-        <Text style={styles.label}>Seu nome:</Text>
+        {/* Campo para identificação do usuário */}
+        <Text style={styles.label}>
+          Seu nome:
+        </Text>
 
         <TextInput
           style={styles.input}
@@ -58,6 +123,7 @@ export default function LoginScreen() {
           onSubmitEditing={entrar}
         />
 
+        {/* Botão de acesso, desabilitado quando o campo está vazio */}
         <Pressable
           style={({ pressed }) => [
             styles.botao,
@@ -67,9 +133,12 @@ export default function LoginScreen() {
           onPress={entrar}
           disabled={!nome.trim()}
         >
-          <Text style={styles.textoBotao}>Entrar</Text>
+          <Text style={styles.textoBotao}>
+            Entrar
+          </Text>
         </Pressable>
 
+        {/* Mensagem institucional */}
         <Text style={styles.rodape}>
           Tecnologia conectando você ao ambiente.
         </Text>
@@ -77,82 +146,3 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 28,
-    alignItems: 'center',
-    elevation: 4,
-  },
-  imagem: {
-    width: 90,
-    height: 90,
-    marginBottom: 12,
-  },
-  titulo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0F172A',
-  },
-  subtitulo: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 32,
-  },
-  label: {
-    alignSelf: 'flex-start',
-    color: '#334155',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    color: '#0F172A',
-    marginBottom: 18,
-  },
-  botao: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  botaoDesabilitado: {
-    backgroundColor: '#94A3B8',
-  },
-  botaoPressionado: {
-    backgroundColor: '#1D4ED8',
-  },
-  textoBotao: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  rodape: {
-    marginTop: 28,
-    color: '#94A3B8',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-});
