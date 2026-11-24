@@ -366,7 +366,7 @@ export default function HomeScreen() {
 
       {/* AVISOS DE COMUNICAÇÃO */}
       {!conectado && (
-        <Text style={styles.aviso}>
+        <Text style={[styles.aviso, modoEscuro && styles.textoClaro]}>
           {carregando
             ? 'Conectando ao ESP32...'
             : 'Não foi possível acessar o ESP32. Verifique a conexão Wi-Fi.'}
